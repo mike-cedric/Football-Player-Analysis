@@ -1,0 +1,1447 @@
+---
+title: "Projet Analyse de Données"
+author: "Fossi Cedric"
+date: "20 Mai 2024"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+# Introduction
+
+Ce projet d'analyse de données vise à explorer les performances et les caractéristiques des joueurs de football au cours des années 2013 à 2021. Le jeu de données, initialement trouvé sur Kaggle, se compose de quatre ensembles de données distincts qui ensemble offrent une vision détaillée des statistiques des joueurs à travers les saisons et les tournois. Ces données incluent :
+
+- players_stats_per_season.csv : un ensemble riche contenant des statistiques détaillées par joueur et par saison, telles que les buts, les passes décisives, les cartons jaunes, parmi d'autres mesures, réparties sur 116 colonnes.
+
+- player_id_mapping.csv : qui fournit une correspondance entre les identifiants des joueurs et leurs noms, facilitant le suivi et l'identification des joueurs à travers les différentes tables.
+
+- season_mapping.csv : qui relie les identifiants des saisons à leurs noms correspondants, clarifiant le contexte temporel des données analysées.
+
+- tournaments_mapping.csv : qui établit une relation entre les noms des tournois et leurs identifiants, permettant une analyse ciblée par compétition.
+
+
+L'objectif principal de cette étude est de déterminer les tendances dans les performances des joueurs, en se concentrant spécifiquement sur les participants des cinq plus grands championnats d'Europe. En outre, cette analyse tente de découvrir si les caractéristiques des joueurs peuvent prédire le championnat auquel ils appartiennent, ce qui pourrait offrir des insights sur la spécificité des compétences requises par chaque ligue.
+
+Le choix de ce focus sur les grands championnats européens est motivé par leur visibilité et leur impact significatif dans le monde du football. Ces championnats sont souvent considérés comme des benchmarks dans l'évaluation des talents et des performances à l'échelle mondiale.
+
+
+#Prérequis pour Débutants en Football
+
+Afin de faciliter la compréhension de ce rapport, voici une introduction aux termes clés et aux concepts de base du football qui seront utilisés tout au long de l'analyse :
+
+##Tournoi
+Dans le contexte du football, un tournoi se réfère à une compétition organisée où plusieurs équipes jouent des matchs selon un format spécifique pour remporter un titre ou un trophée. Les tournois peuvent être locaux, nationaux ou internationaux. Exemples de tournois incluent la Premier League en Angleterre, La Liga en Espagne, et la Ligue des Champions UEFA, qui est une compétition européenne.
+
+##Saison
+Une saison de football désigne la période pendant laquelle une série officielle de matchs de football est jouée. Typiquement, cela couvre une période allant de l'été d'une année au printemps de l'année suivante, bien que cela puisse varier selon les pays et les ligues. Chaque saison est une opportunité pour les équipes de remporter des titres dans leurs ligues respectives et d'améliorer leur classement.
+Prenons l'exemple de l'Espagne pour illustrer le concept de saison dans le football. Chaque année, un classement des 20 meilleurs clubs espagnols est établi, basé sur des matchs disputés de Août à Mai. Chaque victoire, match nul ou défaite attribue un certain nombre de points à chaque club. À la fin de la saison, le club avec le plus grand nombre de points est déclaré meilleur club d'Espagne et remporte le fameux trophée appelé "LaLiga". Les trois clubs en fin de classement sont relégués à une division inférieure.
+
+##Tournois Nationaux et Internationaux
+Les tournois mentionnés ci-dessus, comme LaLiga, sont des exemples de compétitions jouées au sein d'un même pays, visant à classer les meilleurs clubs nationaux. En parallèle, il existe des tournois internationaux conçus pour classer les meilleurs clubs du monde entier, en les faisant concourir les uns contre les autres.
+
+Le tournoi le plus prestigieux et le mieux connu dans ce domaine est la Champions League (la Ligue des Champions UEFA). Cette compétition annuelle oppose les meilleurs clubs de chaque pays européen, chacun ayant obtenu sa place en excellant dans sa ligue nationale respective. Le vainqueur de la Champions League est souvent considéré comme le meilleur club de football du monde pour cette année.
+
+Note Importante : Dans ce rapport, les termes "championnat" et "ligue" sont utilisés de manière interchangeable. Tous deux font référence à une série organisée de compétitions sportives où plusieurs équipes ou joueurs s'affrontent pour déterminer le champion dans une discipline donnée. Par exemple, quand nous parlons de la "Premier League" en Angleterre ou de "LaLiga" en Espagne, nous pouvons nous référer à ces compétitions soit comme des championnats soit comme des ligues.
+
+
+#Statistiques de Joueurs
+Les statistiques de joueurs comprennent diverses données collectées pour évaluer la performance d'un joueur. Ces données incluent :
+
+- Buts : Le nombre de fois qu'un joueur a marqué pendant un match.
+- Passes décisives : Le nombre de passes qu'un joueur effectue qui mènent directement à un but.
+- Cartons jaunes/rouges : Les pénalités données à un joueur pour comportement antisportif ou jeu dangereux.
+- Duel : Un duel est une confrontation directe entre deux joueurs adverses qui se disputent le contrôle du ballon. Celui qui gagne le duel est celui qui réussit à se débarrasser de l'autre joueur et à conserver le ballon à ses pieds.
+- Contestation : Une contestation est une dispute sur une décision prise par l'arbitre pendant le jeu.
+- Surface de réparation : La surface de réparation est une zone rectangulaire située devant chaque but, marquée sur le terrain de jeu. Toutes les fautes commises par l'équipe défensive dans cette zone peuvent entraîner l'attribution d'un penalty, qui est un tir au but direct effectué depuis le point de penalty, situé à 11 mètres du but .
+
+Ces statistiques sont cruciales pour analyser la performance des joueurs au fil des saisons et des tournois. Au fil de notre étude, nous explorerons également de nombreux autres concepts et termes spécifiques au football. Ces éléments seront introduits et expliqués de manière détaillée au fur et à mesure de leur apparition dans notre analyse.
+
+
+#Compétitions Européennes
+Les cinq plus grands championnats européens, souvent au cœur des analyses de performances dans le football, incluent :
+
+- Premier League (Angleterre)
+- La Liga (Espagne)
+- Bundesliga (Allemagne)
+- Serie A (Italie)
+- Ligue 1 (France)
+
+Ces ligues attirent certains des meilleurs talents mondiaux et sont suivies par des millions de fans à travers le monde.
+
+
+#PARTIE A
+
+# Exploration des Données
+
+Cette section détaille l'approche adoptée pour explorer les données disponibles, identifier les caractéristiques principales des datasets, et préparer le terrain pour des analyses plus approfondies.
+
+## Chargement des Données
+
+Nous commençons par charger les données nécessaires depuis plusieurs fichiers CSV. Chaque dataset représente une dimension spécifique des informations sur les joueurs et les compétitions.
+
+#```{r}
+#install.packages("dplyr")
+#```
+
+```{r}
+# Charge les données
+library(dplyr)
+player_id_mapping <- read.csv2('player_id_mapping.csv',row.names=1,sep=",")
+players_stats_per_season <- read.csv2('players_stats_per_season.csv',sep=",")
+season_mapping <- read.csv2('season_mapping.csv',sep=",")
+tournaments_mapping <- read.csv2('tournaments_mapping.csv',sep=",")
+```
+
+```{r}
+players_stats_per_season<- players_stats_per_season[,-1]
+season_mapping<- season_mapping[,-1]
+tournaments_mapping<- tournaments_mapping[,-1]
+```
+
+## Inspection Initiale
+Après le chargement, il est crucial de comprendre la structure de chaque dataset. Nous examinons les premières lignes de chaque tableau pour obtenir un aperçu des données.
+```{r}
+head(player_id_mapping)
+head(players_stats_per_season)
+head(season_mapping)
+head(tournaments_mapping)
+```
+
+##I. Exploration de 'player_id_mapping'
+Nous analysons le dataset 'player_id_mapping' pour identifier les anomalies telles que les doublons et les valeurs manquantes.
+
+```{r}
+# Explore le dataset player_id_mapping
+
+str(player_id_mapping)
+summary(player_id_mapping)
+
+# Compte le nombre de valeurs uniques pour la colonne player_name
+cat("Il y a :", length(unique(player_id_mapping$player_name)), "valeurs uniques pour la colonne player_name\n")
+
+# Vérifie les valeurs manquantes
+sum(is.na(player_id_mapping)) #aucune valeur manquante
+
+# Affiche les lignes dupliquées, s'il y en a
+player_id_mapping[duplicated(player_id_mapping), ] #cette ligne montre qu'il n'y a pas de valeurs dupliquées
+```
+Cette partie du code aide à identifier les joueurs ayant plusieurs identifiants, ce qui est crucial pour l'intégrité des analyses ultérieures.
+
+Dans ce dataset, nous observons uniquement les informations sur les identifiants et les noms de tous les joueurs. Normalement, il contient 83,483 joueurs. Cependant, nous constatons qu'il n'y a que 80,710 valeurs uniques, alors qu'il devrait y en avoir 83,483, étant donné que tous les joueurs doivent être distincts. De plus, il n'y a pas de valeurs manquantes (NaN) pour justifier cette différence. Il n'y a également pas de duplications au sens strict du terme. Nous avons donc ensuite vérifié si certain joueurs ne serai pas inscrit avec different identifiant.
+
+## Regroupement et Comptage d'Identifiants
+Pour mieux comprendre les doublons potentiels, nous regroupons les données par nom de joueur et comptons les identifiants uniques associés à chaque nom.
+
+```{r}
+#Regroupe les données par 'player_name' et compter le nombre d'identifiants uniques par joueur
+player_id_counts <- player_id_mapping %>%
+  group_by(player_name) %>%
+  summarise(n_ids = n_distinct(player_id))
+
+# Filtre pour trouver les joueurs ayant plus d'un identifiant
+players_multiple_ids <- player_id_counts %>%
+  filter(n_ids > 1)
+
+# Affiche les joueurs ayant plusieurs identifiants
+print(players_multiple_ids)
+```
+Nous constatons effectivement que certains joueurs sont associés à plusieurs identifiants. En réalité, cela est dû au fait que certains joueurs ont les mêmes noms et prénoms. Il sera donc primordial d'utiliser à chaque fois l'identifiant des joueurs plutôt que leurs noms pour éviter toute confusion.
+
+
+
+##II. Exploration de 'tournament_mapping'
+
+```{r}
+
+# Explore le dataset tournaments_mapping
+str(tournaments_mapping)
+summary(tournaments_mapping)
+head(tournaments_mapping)
+
+# Compte le nombre de valeurs uniques pour la colonne tournament_name
+cat("Il y a :", n_distinct(tournaments_mapping$tournament_name), "valeurs uniques pour la colonne tournament_name\n")
+
+# Vérifie les valeurs manquantes
+sum(is.na(tournaments_mapping))
+
+# Affiche les lignes dupliquées, s'il y en a
+tournaments_mapping[duplicated(tournaments_mapping), ]
+
+```
+```{r}
+# Regroupe les données par 'tournament_name' et compter le nombre d'identifiants uniques par tournoi
+tournament_id_counts <- tournaments_mapping %>%
+  group_by(tournament_name) %>%
+  summarise(n_ids = n_distinct(tournament_id))
+
+# Filtre pour trouver les tournois ayant plus d'un identifiant
+tournament_multiple_ids <- tournament_id_counts %>%
+  filter(n_ids > 1)
+
+# Affiche les tournois ayant plusieurs identifiants
+print(tournament_multiple_ids)
+```
+Nous pouvons faire la même remarque pour ce dataset que pour le précédent. Cette situation est due au fait qu'il existe certaines divisions rares qui portent le même nom de championnat dans différents pays. Par exemple, il pourrait y avoir un championnat en France nommé "Ligue 1" et un autre en Suisse portant également le nom de "Ligue 1". Par conséquent, nous nous fierons principalement aux identifiants pour distinguer ces cas.
+
+##III. Exploration de 'Season Mapping'
+
+```{r}
+library(dplyr)
+
+# Explore le dataset season_mapping
+str(season_mapping)
+summary(season_mapping)
+head(season_mapping)
+
+# Compte le nombre de valeurs uniques pour la colonne season_name
+cat("Il y a :", n_distinct(season_mapping$season_name), "valeurs uniques pour la colonne season_name\n")
+
+# Vérifie les valeurs manquantes
+sum(is.na(season_mapping))
+
+# Affiche les lignes dupliquées, s'il y en a
+season_mapping[duplicated(season_mapping), ]
+
+```
+
+```{r}
+# Regroupe les données par 'season_name' et compter le nombre d'identifiants uniques par saison
+season_id_counts <- season_mapping %>%
+  group_by(season_name) %>%
+  summarise(n_ids = n_distinct(season_id))
+
+# Filtre pour trouver les saisons ayant plus d'un identifiant
+season_multiple_ids <- season_id_counts %>%
+  filter(n_ids > 1)
+
+# Affiche les saisons ayant plusieurs identifiants
+print(season_multiple_ids)
+```
+
+Étant donné que les saisons correspondent simplement à l'enchaînement des matchs de chaque championnat au fil des années, il est normal que nous rencontrions le même problème que celui observé avec les tournois. Nous remarquons également que les données des saisons s'étendent de 2013 à 2021.
+
+
+##IV. Exploration de 'Player Stats per Season'
+
+```{r}
+# Explore la structure du dataset players_stats_per_season
+str(players_stats_per_season)
+
+# Obtien un résumé statistique pour chaque colonne du dataset
+summary(players_stats_per_season)
+
+# Affiche les noms des colonnes du dataset
+colnames(players_stats_per_season)
+
+```
+
+Ce jeu de données contient énormément d'observations et surtout beaucoup de variables.
+
+Pour que vous puissiez comprendre les choix faits dans la partie nettoyage, il est important que vous compreniez les variables en jeu dans ce jeu de données. Nous allons expliquer les variables qui peuvent paraître flou.
+
+- totalRating : Note cumulative attribuée à un joueur sur une saison ou un tournoi.
+- countRating : Nombre de fois qu'un joueur a été évalué pendant la saison ou le tournoi.
+- directRedCards : Nombre de cartons rouges directs reçus. (Un carton rouge est données directement lorsqu'un joueur commet une faute grave ou lorsque celui si obtien 2 carton jaune.)
+- substitutionsIn : Nombre de fois que le joueur a été mis en jeu au cour du match un match.
+- substitutionsOut : Nombre de fois que le joueur a été remplacé lors d'un match.
+- appearances : Nombre total de fois que le joueur est apparu sur le terrain pendant les matchs.
+- accuratePasses : Nombre total de passes réussies.
+- accurateOwnHalfPasses : Passes réussies dans la moitié de terrain propre.
+- accurateOppositionHalfPasses : Passes réussies dans la moitié de terrain adverse.
+- keyPasses : Passes clés qui ont mené à une occasion de but.
+- shotsOnTarget : Nombre de tirs cadrés.
+- goalsFromInsideTheBox : Buts marqués depuis l'intérieur de la surface de réparation.
+- goalsFromOutsideTheBox : Buts marqués depuis l'extérieur de la surface de réparation.
+- cleansheets : Nombre de fois qu'une equipe, grâce à son gardien n'a pas encaissé de buts.
+
+
+Nous allons en rester là pour le moment.
+
+
+```{r}
+# Affiche le nombre de valeurs uniques pour 'player_id'
+cat("Il y a :", n_distinct(players_stats_per_season$player_id), "valeurs uniques pour la colonne player_id\n")
+
+# Affiche le nombre de valeurs uniques pour 'season_id'
+cat("Il y a :", n_distinct(players_stats_per_season$season_id), "valeurs uniques pour la colonne season_id\n")
+
+# Affiche le nombre de valeurs uniques pour 'tournament_id'
+cat("Il y a :", n_distinct(players_stats_per_season$tournament_id), "valeurs uniques pour la colonne tournament_id\n")
+```
+L'alignement du nombre de valeurs uniques pour player_id, season_id, et tournament_id dans le dataset players_stats_per_season avec le nombre de lignes ou d'entrées dans les datasets correspondants (player_id_mapping, season_mapping, et tournaments_mapping) indique une cohérence importante entre ces ensembles de données. Cela implique que potentiellement tous les joueurs répertoriés dans player_id_mapping ont des statistiques de performance enregistrées dans players_stats_per_season. Cela indique également une couverture complète des saisons pour lesquelles des données de performance des joueurs sont disponibles.De même, le nombre de tournois uniques indique que players_stats_per_season couvre toutes les compétitions référencées dans tournaments_mapping, montrant que le dataset fournit une vue d'ensemble complète des performances des joueurs à travers différents tournois.
+
+
+
+#PARTIE B
+
+#Fusion et Nettoyage des Datasets
+
+Cette section décrit les étapes suivies pour fusionner et nettoyer les différents ensembles de données afin de préparer les données pour l'analyse.
+
+## Fusion des Datasets
+
+Nous commençons par fusionner les datasets pour incorporer les noms des joueurs, les saisons, et les tournois dans les statistiques par saison.
+
+```{r}
+library(dplyr)
+# Fusion des datasets pour inclure le nom des joueurs dans les statistiques par saison
+merged_data <- players_stats_per_season %>%
+  left_join(player_id_mapping, by = "player_id") %>%
+  left_join(season_mapping, by = "season_id") %>%
+  left_join(tournaments_mapping, by = "tournament_id")
+
+# Afficher les 5 premières lignes du dataset fusionné
+head(merged_data)
+```
+On peut voir que certain colonne necessite une conversion de leur type.
+
+## Conversion de Type de Données
+```{r}
+# Converti les colonnes qui sont ici de type chr alors que c'est des float
+merged_data <- merged_data %>%
+  mutate(across(c(totalRating, countRating, goals, assists, goalsAssistsSum, yellowCards, directRedCards, redCards, minutesPlayed, matchesStarted, scoringFrequency, yellowRedCards, substitutionsIn, substitutionsOut, id, appearances, rating, bigChancesCreated, bigChancesMissed, accuratePasses, inaccuratePasses, totalPasses, accuratePassesPercentage, accurateOwnHalfPasses, accurateOppositionHalfPasses, accurateFinalThirdPasses, keyPasses, successfulDribbles, successfulDribblesPercentage, tackles, interceptions, accurateCrosses, accurateCrossesPercentage, totalShots, shotsOnTarget, shotsOffTarget, groundDuelsWon, groundDuelsWonPercentage, aerialDuelsWon, aerialDuelsWonPercentage, totalDuelsWon, totalDuelsWonPercentage, goalConversionPercentage, penaltiesTaken, penaltyGoals, penaltyWon, penaltyConceded, shotFromSetPiece, freeKickGoal, goalsFromInsideTheBox, goalsFromOutsideTheBox, headedGoals, leftFootGoals, rightFootGoals, accurateLongBalls, accurateLongBallsPercentage, clearances, errorLeadToGoal, errorLeadToShot, dispossessed, wasFouled, fouls, hitWoodwork, ownGoals, dribbledPast, offsides, blockedShots, passToAssist, saves, cleanSheet, penaltyFaced, penaltySave, savedShotsFromInsideTheBox, savedShotsFromOutsideTheBox, goalsConcededInsideTheBox, goalsConcededOutsideTheBox, punches, runsOut, successfulRunsOut, highClaims, crossesNotClaimed, penaltyConversion, setPieceConversion, totalAttemptAssist, totalContest, totalCross, duelLost, aerialLost, attemptPenaltyMiss, attemptPenaltyPost, attemptPenaltyTarget, totalLongBalls, goalsConceded, savesCaught, savesParried, totalOwnHalfPasses, totalOppositionHalfPasses, possessionLost, possessionWonAttThird, totalChippedPasses, accurateChippedPasses, touches, tacklesWon, tacklesWonPercentage, totwAppearances, shotsFromInsideTheBox, shotsFromOutsideTheBox, team.ranking, team.id), as.numeric))
+
+```
+
+
+
+## Nettoyage
+
+Après la fusion des différents datasets pour enrichir les statistiques des joueurs avec des informations supplémentaires sur les joueurs, les saisons et les tournois, une étape cruciale de nettoyage des données a été nécessaire. L'objectif principal de ce nettoyage était de réduire autant que possible le nombre de valeurs manquantes tout en conservant un maximum d'informations pertinentes pour nos analyses.
+
+Cette démarche de nettoyage a impliqué plusieurs techniques spécifiques, comme l'imputation des valeurs manquantes là où cela était justifiable (par exemple, remplacer les valeurs manquantes par la moyenne ou la médiane de la colonne, selon la nature des données). Nous avons également examiné les colonnes avec un pourcentage élevé de valeurs manquantes pour évaluer leur impact potentiel sur l'analyse. Dans certains cas, il a été décidé de supprimer les colonnes où un trop grand nombre de données manquantes aurait pu biaiser les résultats de l'analyse.
+
+De plus, nous avons pris soin d'éliminer les doublons et de corriger les incohérences identifiées dans les données fusionnées, tout en veillant à ne pas supprimer les informations essentielles qui pourraient être critiques pour comprendre les performances des joueurs au fil des saisons. Cette approche équilibrée nous a permis de nettoyer le dataset efficacement, maximisant ainsi la qualité et la fiabilité des analyses subséquentes.
+
+
+```{r}
+# Calcule du ratio du totalRating sur le countRating, en évitant la division par zéro
+merged_data <- merged_data %>%
+  mutate(ratingPerCount = ifelse(countRating > 0, totalRating / countRating, 0))
+
+# Supprime les colonnes inutiles
+merged_data <- select(merged_data, -c(totalRating, countRating, redCards,goalsAssistsSum,directRedCards, 
+                                       yellowRedCards, substitutionsIn, substitutionsOut, 
+                                       bigChancesMissed, inaccuratePasses, accuratePasses, 
+                                       shotsOffTarget, groundDuelsWon, groundDuelsWonPercentage, 
+                                       aerialDuelsWon, aerialDuelsWonPercentage, penaltiesTaken, 
+                                       penaltyGoals, penaltyConceded, goalsFromInsideTheBox, 
+                                       clearances, ownGoals, errorLeadToShot, dispossessed, 
+                                       hitWoodwork, dribbledPast, blockedShots, 
+                                       savedShotsFromInsideTheBox, savedShotsFromOutsideTheBox,possessionLost, tackles, 
+                                       goalsConcededInsideTheBox, goalsConcededOutsideTheBox, punches, 
+                                       runsOut, crossesNotClaimed, penaltyConversion, setPieceConversion, 
+                                       totalAttemptAssist, totalCross, duelLost, aerialLost, 
+                                       attemptPenaltyMiss, attemptPenaltyPost, attemptPenaltyTarget, 
+                                       totalLongBalls, goalsConceded, possessionWonAttThird, 
+                                       totalChippedPasses, accurateChippedPasses, touches,totwAppearances, 
+                                       tacklesWonPercentage))
+```
+Le choix de supprimer ces colonnes a été purement subjectif. Nous avons estimé que ces colonnes apportaient des informations déjà présentes dans d'autres colonnes ou que les informations fournies n'étaient pas très utiles pour notre analyse.
+
+
+#```{r}
+#install.packages("visdat")
+#```
+
+```{r}
+#voyons les colonnes avec des NaN
+colSums(is.na(merged_data))
+
+library(visdat)
+library(ggplot2)
+
+#Peut prendre enormement de temps a s'afficher en raison des grands volume de données (environ 4 minutes)
+
+#figure montrant les NaN
+vis_miss(merged_data, warn_large_data = FALSE) +
+  theme_minimal() + 
+  scale_fill_manual(values = c("TRUE" = "darkred", "FALSE" = "lightgray")) 
+
+#en rouge nous avons les données Na qui represente 49% de ne données donc autant dire que c'est enorme.
+
+```
+```{r}
+#affiche les 5 premières lignes des 20 premiere colonnes
+head(merged_data[, 1:20])
+
+#montre les NaN dans les 20 premières colonnes
+colSums(is.na(merged_data[, 1:20]))
+
+#voir ou sont les NaN de la colonne minutesPlayed
+merged_data[is.na(merged_data$minutesPlayed), ]
+
+#On voit que les NaN dans minutesplayed sont pour des joueur qui n'ont pas joué de matchs. On peut donc suprimer les lignes avec des NaN dans cette colonne
+merged_data <- merged_data[!is.na(merged_data$minutesPlayed), ]
+
+```
+Nous observons une contradiction entre les données des colonnes 'minutesPlayed' et 'goals'. Certains joueurs ont en effet enregistré des buts sans avoir de minutes de jeu comptabilisées, ce qui n'est pas cohérent. Nous allons donc supprimer la colonne 'minutesPlayed' ainsi que 'scoringFrequency', cette dernière étant calculée à partir des minutes jouées. Plus tard, nous recalculerons la fréquence de marquage (scoringFrequency), mais cette fois-ci à partir des données de 'appearances' qui est le nombre d'apparition de chaque joueur.
+
+```{r}
+#supprime minutesplayed et scoringfrequency
+merged_data <- select(merged_data, -c(minutesPlayed, scoringFrequency))
+
+#suprime aussi team.ranking et type car pas utile
+merged_data <- merged_data %>%
+  select(-c(team.ranking, type))
+
+merged_data <- merged_data %>%
+  select(-c(team.id,id)) 
+
+```
+
+
+```{r}
+
+
+#affiche les 5 premières lignes des 20 premiere colonnes
+head(merged_data[, 1:20])
+
+#montrer les NaN dans les 20 premières colonnes
+colSums(is.na(merged_data[, 1:20]))
+
+#voir ou sont les NaN de les colonnes assists et goals
+merged_data[is.na(merged_data$assists), ]
+
+#les lignes avec des NaN dans appearances sont des joueurs qui n'ont pas joué de matchs. On peut donc suprimer les ligne avec des NaN dans cette colonne
+merged_data <- merged_data[!is.na(merged_data$appearances), ]
+```
+Vérifions si avec les traitement fait jusqu'a present, certain nombre de but ont été affecter. Prenons Messi par exemple:
+
+```{r}
+# Filtrer les données pour obtenir uniquement celles correspondant à Messi
+messi_data_clean <- subset(merged_data, player_name == "Lionel Messi")
+
+
+# Calculer le nombre total de buts marqués par Messi
+total_goals_messi <- sum(messi_data_clean$goals, na.rm = TRUE)
+
+# Afficher le résultat
+
+cat("Le nombre total de buts marqués par Messi est de", total_goals_messi, ".\n")
+```
+Okay, la on voit que très logiquement le nombre de but de Messi n'a pas été affecté.
+
+```{r}
+#voir ou sont les NaN de la colonnes rating 
+merged_data[is.na(merged_data$rating), ]
+```
+Nous constatons qu'un NAN dans la colonne 'rating' entraîne des NAN dans de nombreuses autres colonnes. Par conséquent, supprimer les lignes contenant des NAN dans rating nous ferait perdre trop d'informations. Nous allons donc procéder différemment.
+
+
+
+I. Traitement des variables de comptage
+
+Pour les variable de comptage comme les buts, passe decisive etc, nous allons remplacer par 0 les valeurs manquantes (NA) car elle indique qu'un événement (comme marquer un but ou faire une passe décisive) n'a pas eu lieu.
+
+```{r}
+#remplaceons les NaN dans les colonnes de comptage
+
+merged_data$assists <- ifelse(is.na(merged_data$assists), 0, merged_data$assists)
+merged_data$yellowCards <- ifelse(is.na(merged_data$yellowCards), 0, merged_data$yellowCards)
+merged_data$matchesStarted <- ifelse(is.na(merged_data$matchesStarted), 0, merged_data$matchesStarted)
+
+```
+Pour l'instant ce serons les seules variables de comptage que nous traiterons car nous avons remarquer que certain variable sont NAN parceque rating est un NAN. Donc en gros c'est lorsqu'on a pas noté les joueurs et par consequent certain variable ne sont pas remplis.
+
+
+II. Traitement des variables de mesure et de pourcentage
+
+Pour les variables de pourcentage, une imputation par la moyenne peut être plus appropriée, étant donné qu'un 0 pourrait être trompeur.
+
+Cependant il faudrait faire attention de remplacer le NAN par la moyenne du joueur en question.
+
+```{r}
+
+# Liste des colonnes de mesure à traiter
+cols_de_mesure <- c("totalDuelsWonPercentage", "accurateCrossesPercentage", "accuratePassesPercentage", 
+                    "successfulDribblesPercentage", "goalConversionPercentage", "accurateLongBallsPercentage", "ratingPerCount")
+
+merged_data <- merged_data %>%
+  group_by(player_id) %>%
+  mutate(across(all_of(cols_de_mesure), ~if_else(is.na(.x), mean(.x, na.rm = TRUE), .x))) %>%
+  ungroup()
+
+```
+
+
+
+Nous allons remplacer les NA de rating par la moyenne de rating du joueur
+Nous allons aussi remplacer les valeurs NAN des variable de comptage cette fois si non pas par 0 mais par leur moyenne. Pour que ce soit coherent avec leur ratings.
+
+
+```{r}
+cols <- c("rating", "bigChancesCreated", "totalPasses", 
+                    "accurateOwnHalfPasses", "accurateOppositionHalfPasses", "accurateFinalThirdPasses", "ratingPerCount","keyPasses","successfulDribbles","interceptions","totalShots","shotsOnTarget","totalDuelsWon", "accurateCrosses","penaltyWon","shotFromSetPiece","freeKickGoal","goalsFromOutsideTheBox","headedGoals","leftFootGoals","rightFootGoals", "accurateLongBalls", "errorLeadToGoal","wasFouled", "fouls","offsides","passToAssist","saves","cleanSheet","penaltyFaced","penaltySave" , "successfulRunsOut","highClaims","totalContest","savesCaught","savesParried","totalOwnHalfPasses","totalOppositionHalfPasses","tacklesWon","shotsFromInsideTheBox", "shotsFromOutsideTheBox")
+
+merged_data <- merged_data %>%
+  group_by(player_id) %>%
+  mutate(across(all_of(cols), ~if_else(is.na(.x), mean(.x, na.rm = TRUE), .x))) %>%
+  ungroup()
+
+```
+
+```{r}
+#voir ou sont les NaN de la colonnes rating 
+merged_data[is.na(merged_data$rating), ]
+```
+Les NAN restant sont des joueurs qui n'ont jamais été noter. Pour ceux la, nous sommes obligé de suprimer les lignes en question.
+
+```{r}
+#voyons les colonnes avec des NaN
+colSums(is.na(merged_data))
+```
+
+
+supprimons mtn les lignes avec ces NAN
+```{r}
+
+merged_data <- merged_data[!is.na(merged_data$rating), ]
+```
+
+
+
+
+```{r}
+#voyons les colonnes avec des NaN
+colSums(is.na(merged_data))
+```
+```{r}
+#remplace les NAN restant par 0
+merged_data$shotsFromOutsideTheBox <- ifelse(is.na(merged_data$shotsFromOutsideTheBox), 0, merged_data$shotsFromOutsideTheBox)
+merged_data$shotsFromInsideTheBox <- ifelse(is.na(merged_data$shotsFromInsideTheBox), 0, merged_data$shotsFromInsideTheBox)
+merged_data$tacklesWon <- ifelse(is.na(merged_data$tacklesWon), 0, merged_data$tacklesWon)
+```
+
+Revoyons les statistiques de Messi pour vérifier si le nettoyage a entraîné une perte excessive de données.
+
+```{r}
+
+# Filtre les données pour obtenir uniquement celles correspondant à Messi
+messi_data_clean <- subset(merged_data, player_name == "Lionel Messi")
+
+
+# Calcule le nombre total de buts marqués par Messi
+total_goals_messi <- sum(messi_data_clean$goals, na.rm = TRUE)
+
+# Affiche le résultat
+
+cat("Le nombre total de buts marqués par Messi est de", total_goals_messi, ".\n")
+```
+
+```{r}
+# Sélectionne les lignes où le nom du joueur est 'Lionel Messi'
+messi_rows <- merged_data[merged_data$player_name == 'Lionel Messi', ]
+messi_rows
+
+```
+
+## Filtration Précise des Données des Cinq Grands Championnats
+
+Afin de concentrer notre analyse sur les performances des joueurs dans les cinq grands championnats européens—LaLiga, Ligue 1, Bundesliga, Premier League, et Serie A—nous avons opté pour une approche de filtration basée sur les identifiants des tournois plutôt que sur leurs noms. Cette méthode nous permet d'éviter les confusions causées par les noms de tournois homonymes qui existent dans différentes ligues autour du monde. Par exemple, plusieurs championnats portent le nom "LaLiga" mais ne correspondent pas à la première division espagnole. En utilisant les identifiants uniques de chaque tournoi, nous pouvons garantir que notre analyse se limite strictement aux ligues de haut niveau en Europe, ce qui renforce la précision de nos insights et l'intégrité de notre rapport. Ce choix méthodologique assure que les données utilisées reflètent précisément le niveau de compétition et les performances au sein des contextes les plus compétitifs du football européen.
+
+
+```{r}
+grand_championships_ids <- c("8", "23", "34", "35", "17")
+```
+
+
+```{r}
+# Filtration du dataset pour garder seulement les lignes correspondant aux grands championnats
+filtered_data <- merged_data %>%
+  filter(tournament_id %in% grand_championships_ids)
+
+
+filtered_data
+```
+
+Enlevons les colonnes noms qui ne nous sont plus utiles.
+```{r}
+#enlevons tout les colonnes qui sont des noms
+filtered_data <- filtered_data %>%
+  select(-c(season_name, team.nameCode,ratingPerCount,season_id,tournament_id)) 
+```
+
+
+Pour conclure cette section, procédons au regroupement de nos données par joueur.
+
+```{r}
+library(dplyr)
+#cette fonction retourne le mode de la serie si il y en a un sinon elle retourne la premiere valeur de la serie
+most_frequent <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+```
+```{r}
+filtered_data
+```
+
+
+```{r}
+final_df <- filtered_data %>%
+  group_by(player_id) %>%
+  # Calcule les statistiques par joueur
+  summarise(
+    goals = sum(goals, na.rm = TRUE),
+    assists = sum(assists, na.rm = TRUE),
+    yellowCards = sum(yellowCards, na.rm = TRUE),
+    matchesStarted = sum(matchesStarted, na.rm = TRUE),
+    appearances = sum(appearances, na.rm = TRUE),
+    rating = mean(rating, na.rm = TRUE),
+    bigChancesCreated = sum(bigChancesCreated, na.rm = TRUE),
+    totalPasses = sum(totalPasses, na.rm = TRUE),
+    accuratePassesPercentage = mean(accuratePassesPercentage, na.rm = TRUE),
+    accurateOwnHalfPasses = sum(accurateOwnHalfPasses, na.rm = TRUE),
+    accurateOppositionHalfPasses = sum(accurateOppositionHalfPasses, na.rm = TRUE),
+    accurateFinalThirdPasses = sum(accurateFinalThirdPasses, na.rm = TRUE),
+    keyPasses = sum(keyPasses, na.rm = TRUE),
+    successfulDribbles = sum(successfulDribbles, na.rm = TRUE),
+    successfulDribblesPercentage = mean(successfulDribblesPercentage, na.rm = TRUE),
+    interceptions = sum(interceptions, na.rm = TRUE),
+    accurateCrosses = sum(accurateCrosses, na.rm = TRUE),
+    accurateCrossesPercentage = mean(accurateCrossesPercentage, na.rm = TRUE),
+    totalShots = sum(totalShots, na.rm = TRUE),
+    shotsOnTarget = sum(shotsOnTarget, na.rm = TRUE),
+    totalDuelsWon = sum(totalDuelsWon, na.rm = TRUE),
+    totalDuelsWonPercentage = mean(totalDuelsWonPercentage, na.rm = TRUE),
+    goalConversionPercentage = mean(goalConversionPercentage, na.rm = TRUE),
+    penaltyWon = sum(penaltyWon, na.rm = TRUE),
+    shotFromSetPiece = sum(shotFromSetPiece, na.rm = TRUE),
+    freeKickGoal = sum(freeKickGoal, na.rm = TRUE),
+    goalsFromOutsideTheBox = sum(goalsFromOutsideTheBox, na.rm = TRUE),
+    headedGoals = sum(headedGoals, na.rm = TRUE),
+    leftFootGoals = sum(leftFootGoals, na.rm = TRUE),
+    rightFootGoals = sum(rightFootGoals, na.rm = TRUE),
+    accurateLongBalls = sum(accurateLongBalls, na.rm = TRUE),
+    accurateLongBallsPercentage = mean(accurateLongBallsPercentage, na.rm = TRUE),
+    errorLeadToGoal = sum(errorLeadToGoal, na.rm = TRUE),
+    wasFouled = sum(wasFouled, na.rm = TRUE),
+    fouls = sum(fouls, na.rm = TRUE),
+    offsides = sum(offsides, na.rm = TRUE),
+    passToAssist = sum(passToAssist, na.rm = TRUE),
+    saves = sum(saves, na.rm = TRUE),
+    cleanSheet = sum(cleanSheet, na.rm = TRUE),
+    penaltyFaced = sum(penaltyFaced, na.rm = TRUE),
+    penaltySave = sum(penaltySave, na.rm = TRUE),
+    successfulRunsOut = sum(successfulRunsOut, na.rm = TRUE),
+    highClaims = sum(highClaims, na.rm = TRUE),
+    totalContest = sum(totalContest, na.rm = TRUE),
+    savesCaught = sum(savesCaught, na.rm = TRUE),
+    savesParried = sum(savesParried, na.rm = TRUE),
+    totalOwnHalfPasses = sum(totalOwnHalfPasses, na.rm = TRUE),
+    totalOppositionHalfPasses = sum(totalOppositionHalfPasses, na.rm = TRUE),
+    tacklesWon = sum(tacklesWon, na.rm = TRUE),
+    shotsFromInsideTheBox = sum(shotsFromInsideTheBox, na.rm = TRUE),
+    shotsFromOutsideTheBox = sum(shotsFromOutsideTheBox, na.rm = TRUE),
+    player_name = first(player_name),
+    team_name_most_frequent = most_frequent(team.name),
+    tournament_name_most_frequent = most_frequent(tournament_name)
+  ) 
+
+```
+
+```{r}
+final_df
+```
+Revoyons de facon plus facile a comprendre les stats sur le joueur Lionel messi
+```{r}
+final_df[final_df$player_name == 'Lionel Messi', ]
+```
+Nous pouvons constater que le nombre de buts marqués par Messi a diminué, passant de 343 à 232. Cette baisse s'explique par le fait que nous avons uniquement pris en compte ses buts en LaLiga, et non dans d'autres compétitions telles que la Champions League, la Coupe du Monde, la Supercoupe ou la Copa America. Cependant, cela ne pose pas de problème car nous avons fait de même pour tous les joueurs de notre dataframe final.
+
+
+Voyons voir les meilleurs buteurs des periodes selectionnés
+```{r}
+library(dplyr)
+
+# Trie final_df par buts en ordre décroissant et sélectionner les 10 premières lignes
+top_scorers <- final_df %>%
+  arrange(desc(goals)) %>%
+  slice_head(n = 10)
+
+# Affiche les joueurs avec le plus de buts
+print(top_scorers)
+
+```
+
+
+
+#PARTIE C
+
+#Analyse en Composantes Principales (ACP)
+
+
+
+```{r}
+head(final_df)
+str(final_df)
+```
+
+Nous allons commencé par faire un resumer de notre dataframe final.
+
+```{r}
+summary(final_df)
+```
+Voici ce qu'on peut en dire:
+
+## Distribution des Performances
+1. Buts et Passes Décisives :
+
+- La distribution des buts montre un maximum extrême de 232 buts, ce qui indique probablement la présence de quelques joueurs exceptionnels, tandis que la médiane à 1 suggère que la majorité des joueurs marquent peu, ce qui est finalement normal car notre jeu contient des joueurs de tous les postes (attaque, défense, milieu et gardien) ; donc pour la plupart, leur rôle n'est pas de marquer des buts.
+
+- Pour les passes décisives, le maximum est à 98, indiquant là aussi quelques joueurs très influents, tandis que la plupart des joueurs (médiane à 1) contribuent peu en termes de passes décisives ce qui aussi ici est logique car les joueurs defensive ne sont pas concernés par les passes decisives.
+
+2. Cartons Jaunes :
+
+Une moyenne de près de 8 cartons jaunes et une médiane à 4 montrent une répartition assez large, ce qui pourrait refléter les différents styles de jeu ou la discipline sur le terrain.
+
+
+## Précision et Création de Jeu
+
+### Passes Totales et Pourcentage de Passes Réussies :
+
+- Des valeurs élevées en passes totales et un pourcentage moyen de passes réussies à 75% montrent une forte tendance à la possession et à la distribution efficace du ballon, montrant que ce sport est vraiment un sport en equipe!!
+
+- Créations de Grosses Chances :
+Une moyenne de 5,15 grandes occasions créées, mais avec un maximum à 186,89, montre que certains joueurs sont des créateurs clés, démontrant une capacité à ouvrir les défenses adverses.
+
+## Défense et Tacles
+
+### Interceptions :
+
+- Une moyenne de 50 interceptions par joueur, avec un maximum à 550, suggère que certains joueurs ont un rôle défensif très actif.
+
+
+On peut donc voir qu'il y a une grande variabilité dans presque toutes les métriques, ce qui suggère des différences significatives dans les rôles des joueurs, leurs compétences et leur efficacité.
+
+Commenceons notre ACP...
+
+Les colonnes 53,54 et 55 ne sont pas quantitative. Nous pouvons donc les enlevés pour notre analyse.
+
+```{r}
+joueur_quantitative <- final_df[, -c(53,54,55)]
+joueur_quantitative
+```
+```{r}
+
+joueur_quantitative <- as.data.frame(joueur_quantitative)
+rownames(joueur_quantitative) <- joueur_quantitative$player_id # Assigne la première colonne comme noms des lignes
+joueur_quantitative <- joueur_quantitative[-1]  # Supprime la première colonne du data frame
+
+joueur_quantitative
+
+```
+
+
+Nous allons faire une ACP réduite car les variables sont hétérogènes, dans des unités différentes.
+
+
+
+```{r}
+library(factoextra)
+library(ggplot2)
+library(plotly)
+library(FactoMineR)
+res=PCA(joueur_quantitative, scale.unit=TRUE, graph=TRUE)
+```
+Nous pouvons voir que conserver les deux premiers axes principaux permet d'expliquer 56 % de l'inertie.
+
+Pour mieux visualiser ces axes sur le graphique, nous avons créé un graphique interactif.
+
+```{r}
+# Préparation des données
+var_coords <- res$var$coord 
+var_df <- data.frame(var_coords)
+var_df$Variable <- rownames(var_coords)  
+
+# Crée un graphique plotly
+p <- plot_ly(data = var_df, x = ~Dim.1, y = ~Dim.2, type = 'scatter', mode = 'markers+text', text = ~Variable, hoverinfo = 'text', marker = list(color = 'rgba(255, 182, 193, .9)', size = 10))
+p <- p %>% layout(title = "Interactive PCA Plot of Variables",
+                  xaxis = list(title = "Principal Component 1"),
+                  yaxis = list(title = "Principal Component 2"),
+                  hovermode = 'closest')
+
+# Affiche le graphique
+p
+
+```
+
+2ème graph interactif
+```{r}
+library(plotly)
+
+
+var_coords <- res$var$coord  
+var_df <- data.frame(var_coords)
+var_df$Variable <- rownames(var_coords)  
+
+# Crée un graphique plotly avec des axes pour chaque variable en rouge
+p <- plot_ly() %>%
+  # Ajoute les axes pour chaque variable
+  add_segments(x = 0, y = 0, xend = var_df$Dim.1, yend = var_df$Dim.2,
+               line = list(color = 'red', width = 2)) %>%
+  # Ajoute les points
+  add_markers(data = var_df, x = ~Dim.1, y = ~Dim.2, text = ~Variable,
+              hoverinfo = 'text', marker = list(color = 'rgba(255, 182, 193, .9)', size = 10)) %>%
+  # Configure le layout
+  layout(title = "Interactive PCA Plot of Variables",
+         xaxis = list(title = "Principal Component 1", zerolinecolor = 'red'),
+         yaxis = list(title = "Principal Component 2", zerolinecolor = 'red'),
+         hovermode = 'closest')
+
+# Affiche le graphique
+p
+
+
+```
+
+Ce graphique de l'Analyse en Composantes Principales (ACP) montre comment les variables sont projetées dans les deux premières dimensions principales, permettant de distinguer les groupes de variables fortement corrélées. On identifie trois groupes principaux : un groupe comprenant des variables liées à la performance défensive, un groupe associé aux statistiques offensives, et un groupe centré sur les actions spécifiques des gardiens.
+
+Les variables bien représentées sont celles dont les vecteurs s'étendent vers le bord du cercle, comme les totalDuelsWon, keypasses et accuratefinalthirdpasses. À l'inverse, interceptions est moins bien représenté, indiquant une moindre pertinence dans l'explication de la variance des données dans ces deux principales composantes.
+
+L'angle entre deux vecteurs reflète la corrélation entre les variables : un angle proche de 0° (ou 180°) indique une forte corrélation positive (ou négative), tandis qu'un angle proche de 90° suggère que les variables sont peu corrélées. Par exemple, les variables keypasses et assists sont fortement corrélées positivement.Tant dis que saves et offsides ne sont pas du tout correlé ce qui est normal car les arrets concerne les gardien de but et les gens en position de hors jeu (offsides) sont generalement les attaquants.
+
+Ceux qui se trouvent à droite du graphique sont principalement des joueurs très offensifs et créatifs. Ceux en bas sont des joueurs surtout très techniques qui marque beaucoup de but, qui participent à la création des actions les plus dangereuses offensivement. L'axe 2 est défini positivement par les caractéristiques des gardiens de but, connus pour n'être ni offensifs ni techniques.
+
+
+```{r}
+res$eig
+```
+Il faudrait garder les 7 premiers axes propre pour expliqué au moin 80% d'inertie.
+
+```{r}
+barplot(res$eig[,2])
+```
+On realise un graph des individus
+```{r}
+plot(res, select="cos2 0.8", choix="ind")
+```
+Fesons le graph des individus mais cette fois ci avec les nom des joueurs directement pour une interpretation facile
+
+```{r}
+res$ind$coord <- `rownames<-`(res$ind$coord, final_df$player_name)
+```
+
+```{r}
+plot(res, select="cos2 0.8", choix="ind")
+```
+Donc la nous pouvons assez facilement distinguer deux grands gardiens, Manuel Neuer et Buffon. Nous pouvons également voir certains joueurs comme Veretout, qui est un milieu de terrain central et donc un joueur plutôt offensif qui contribue à la création d'occasions. Cependant, Veretout n'est pas particulièrement connu pour sa technique balle au pied et son rôle n'est pas de marquer des buts, ce qui est très cohérent. Lorsque nous choisissons un cos2 de 0.7, nous pouvons voir que Neymar est très bien représenté, car c'est un joueur très offensif et surtout technique, qui marque énormément de buts.
+
+
+
+
+#PARTIE D
+
+#CLUSTERING NON SUPERVISE
+
+##CAH
+
+Nous allons commencer par centré et reduire nos données a fin de les accorder la même importance.
+
+```{r}
+joueur_quantitative.cr <- scale(joueur_quantitative,center=TRUE, scale=TRUE)
+d.joueur_quantitative.cr <- dist(joueur_quantitative.cr)
+```
+On utilise la mesure de Ward :
+```{r}
+cah.ward <- hclust(d.joueur_quantitative.cr, method="ward.D2")
+```
+
+On affichage le dendrogramme :
+```{r}
+plot(cah.ward, hang=-1) #hang=-1 option pour aligner les labels.
+```
+On peut choisir de conserver 5 ou 6 clusters, car au-delà de ce nombre, les hauteurs des branches deviennent trop grandes. Nous allons donc en garder 5.
+
+```{r}
+barplot(cah.ward$height)
+```
+On aurait également pu s'intéresser à ce barplot pour identifier le moment où il y a une perte considérable d'inertie inter-classe. Ici, on observe principalement une grande perte d'inertie lorsque l'on passe de 2 à 1 cluster, ce qui rend le choix d'un seul cluster peu intéressant. Il est également difficile de distinguer les pertes lorsque l'on passe de 3 à 2 clusters et de 4 à 3 clusters, mais on peut voir qu'il y a une perte d'inertie considérable. En revanche, la perte devient très légère lorsque l'on passe de 5 à 4 clusters, et elle est insignifiante lorsque l'on passe de 6 à 5 clusters. Donc, il est justifié de conserver 5 clusters.
+
+
+Visualisons ces groupes:
+
+```{r}
+plot(cah.ward, hang =-1,main="ward.D2")
+K=5
+rect.hclust(cah.ward,K)
+```
+
+
+```{r}
+groupes.cah <- cutree(cah.ward, K) 
+```
+
+```{r}
+groupes.cah #les joueurs et leur groupes
+```
+```{r}
+table(groupes.cah) #distribution des joueurs dans leur groupes
+```
+
+## Interpretation des groupes
+
+## Characteristic de chaque groupe
+
+```{r}
+Means_groupes <- matrix(NA, nrow=K, ncol=dim(joueur_quantitative.cr)[2])
+colnames(Means_groupes)=colnames(joueur_quantitative.cr)
+rownames(Means_groupes) =1:K
+for (i in 1:K) Means_groupes[i,]<- colMeans(joueur_quantitative.cr[groupes.cah==i,])
+round(Means_groupes)
+```
+Nous allons faire une première analyse grâce à ces caractéristiques et plus tard, à l'aide de l'ACP, nous pourrons mieux analyser nos clusters.
+
+Groupe 1:
+Les variables telles que les buts, les passes décisives, les cartons jaunes, les matchs commencés et les apparitions contribuent négativement. Pour le reste des caractéristiques, elles sont autour de la moyenne. Vu qu'ils n'apparaissent pas beaucoup en match, on peut les considérer comme des remplaçants.
+
+Groupe 2:
+Joueurs polyvalent : Ce groupe pourrait comprendre des joueurs qui ne se spécialisent pas dans une facette unique du jeu mais qui apportent de la valeur à l'équipe de manière plus discrète ou équilibrée. Ils n'excellent pas dans un domaine particulier, ce qui les rend moins visibles dans les statistiques éclatantes, mais cruciaux pour l'équilibre de l'équipe. Ils ne sont pas toujours titulaires, mais peuvent s'avérer intéressants lorsqu'ils entrent en jeu.
+
+Groupe 3:
+Ce groupe est clairement celui des gardiens de but car il est très corrélé avec les arrêts (saves) ainsi que toutes les caractéristiques d'un gardien.
+
+Groupe 4:
+Ce groupe fait beaucoup de passes, comme l'indique la colonne totalPasses. On peut voir grâce à totalOppositionHalfPasses qu'ils effectuent beaucoup de passes dans la moitié adverse du terrain, mais également dans leur propre moitié. Ils ont également beaucoup d'interceptions. Ce sont des joueurs qui participent offensivement comme défensivement. Ce sont les milieux de terrain classiques ou alors des défenseurs.
+
+Groupe 5:
+C'est clairement le groupe des attaquants et milieux offensifs. Leur nombre de tirs élevé dans et en dehors de la surface de réparation, ainsi que leur nombre de buts élevés, confirment cela.
+
+Petite remarque intéressante:
+On constate que les joueurs qui contestent souvent les décisions des arbitres sont les joueurs offensifs (attaquants et milieux de terrain).
+
+
+## Interpretation avec L'ACP
+
+Commençons par ajouter la colonne groupe à notre dataframe final_df.
+
+```{r}
+final_df <- as.data.frame(final_df)
+
+# Assigne la première colonne comme noms des lignes
+row.names(final_df) <- final_df[[1]]  
+# Supprime la première colonne du data frame
+final_df <- final_df[-1]
+
+final_df
+```
+
+```{r}
+# Nombre de groupes
+K <- max(groupes.cah)
+
+# Initialisation d'une liste pour stocker les DataFrames de chaque groupe
+group_dfs <- list()
+
+for (i in 1:K) {
+  # Extraction des indices des joueurs dans le groupe i
+  I <- which(groupes.cah == i)
+  
+  # Création d'un DataFrame pour le groupe actuel avec les ID des joueurs
+  group_df <- data.frame(
+    rownames = rownames(joueur_quantitative.cr)[I]
+  )
+  
+  # Joindre pour récupérer les informations depuis le DataFrame 'df' et ajouter une colonne 'group'
+   group_df <- group_df %>%
+    left_join(final_df %>% mutate(rownames = rownames(final_df)), by = "rownames") %>%
+    mutate(group = paste(i))
+  
+  # Ajout du DataFrame du groupe à la liste
+  group_dfs[[i]] <- group_df
+}
+
+# Fusion de tous les DataFrames des groupes en un seul DataFrame
+final_groupe_df <- bind_rows(group_dfs)
+final_groupe_df
+```
+```{r}
+final_groupe_df <- as.data.frame(final_groupe_df)
+
+# Assigne la première colonne comme noms des lignes
+row.names(final_groupe_df) <- final_groupe_df[[1]]  
+# Supprimer la première colonne du data frame
+final_groupe_df <- final_groupe_df[-1]
+
+```
+
+
+```{r}
+# Affiche les joueurs du groupe 5
+groupe_5_joueurs <- final_groupe_df %>% filter(group == "5")
+
+# Affiche les résultats
+print(groupe_5_joueurs)
+
+```
+Ce sont bien des attaquants.
+
+
+Fesons ACP avec les groupes.
+
+```{r}
+final_groupe_quantitative <- final_groupe_df[, -c(52,53,54)] #On selectionne uniquement les variables quantitative
+
+final_groupe_quantitative$group <- as.factor(final_groupe_quantitative$group) #On rend la colonne 'groupe' en factor pour qu'elle soit traiter comme une variable qualitative.
+
+
+```
+
+```{r}
+final_groupe_quantitative
+```
+
+
+```{r}
+res2=PCA(final_groupe_quantitative,scale.unit=TRUE, quali.sup = 52, graph=TRUE)
+plot(res2, choix="ind", habillage=52, cex=0.7)
+```
+Nous obtenons un joli graphique des individus, qui, dans un premier temps, confirme bien l'ACP que nous avions réalisée en partie C. Le groupe vert correspond aux gardiens de but (groupe 3). Nous avions également mentionné que les joueurs se trouvant à droite étaient des joueurs offensifs. Ceux en haut à droite sont censés avoir des compétences de milieu de terrain (nombre de passes élevé, création de jeu), tandis que ceux en bas à droite sont surtout des attaquants (bons finisseurs, bons dribbleurs, etc.). Le groupe 4 est donc bien celui des milieux de terrain, tandis que le groupe 5 est celui des attaquants. Le groupe 1 regroupe les joueurs qui ne sont ni offensivement ni défensivement performants, ou du moins qui n'ont pas eu l'occasion de le prouver car ils n'ont pas la confiance du coach et ont presque pas joué pendant cette période (le groupe des remplaçants)
+
+```{r}
+plot(res2, choix="ind", habillage=52, cex=0.7, select= "cos2 0.7")
+```
+
+
+Visualisons maintenant avec les noms des joueurs pour confirmer notre clustering.
+
+```{r}
+res2$ind$coord <- `rownames<-`(res2$ind$coord, final_groupe_df$player_name)
+plot(res2, choix="ind", habillage=52, cex=0.7, select= "cos2 0.7")
+```
+Dans le groupe des gardiens, on peut voir apparaître certains noms connus comme Ter Stegen, Buffon, etc. Dans le groupe des attaquants, on voit des joueurs comme Neymar, Draxler. Cependant, on voit aussi Pogba, qui est ce qu'on appelle un milieu de terrain offensif. C'est presque un attaquant, car il joue très haut sur le terrain et marque beaucoup de buts. Le groupe 4 contient donc des milieux de terrain classiques (milieu central ou défensif).
+
+
+Representons certain joueurs connu pour voir la coherence des groupes
+```{r}
+joueurs_specifiques <- c("Ousmane Dembélé", "Lionel Messi", "Kylian Mbappé", "Sergio Ramos", "Toni Kroos", "Luka Modrić", "Presnel Kimpembe","Giorgio Chiellini","Sergio Busquets","Karim Benzema","Neymar","Paul Pogba","Kevin De Bruyne")
+
+
+indices_joueurs <- which(final_groupe_df$player_name %in% joueurs_specifiques)
+
+```
+
+```{r}
+indices_joueurs
+```
+
+
+```{r}
+# Affiche tous les points en gris
+plot(res2$ind$coord[, 1], res2$ind$coord[, 2], col = "grey", pch = 20, xlab = "PC1", ylab = "PC2", main = "PCA Plot")
+
+# Met en évidence les joueurs spécifiques en rouge
+points(res2$ind$coord[indices_joueurs, 1], res2$ind$coord[indices_joueurs, 2], col = "red", pch = 20)
+
+# Ajout des étiquettes pour les joueurs spécifiques
+text(res2$ind$coord[indices_joueurs, 1], res2$ind$coord[indices_joueurs, 2], labels = final_groupe_df$player_name[indices_joueurs], pos = 3)
+
+```
+```{r}
+final_groupe_df[final_groupe_df$player_name %in% joueurs_specifiques, c("player_name", "group")]
+
+```
+Les joueurs du groupe 4 sont bel et bien soit des défenseurs, soit des milieux de terrain classiques, tandis que ceux du groupe 5 sont des attaquants et des milieux offensifs.
+
+
+
+
+#PARTIE E
+
+#Classification supervisée
+
+Le but ici va donc être d'essayer de prédire dans quel championnat évolue chaque joueur en se basant sur ses caractéristiques et de son groupe. 
+
+```{r}
+final_groupe_df
+```
+
+df2 va être le dataframe sur lequel nous travaillerons pour la prédiction.
+```{r}
+df2 <- final_groupe_quantitative
+df2
+```
+
+On rajoute la colonne tournament_name_most_frequent a df2
+```{r}
+library(dplyr)
+
+# Ajout de noms des lignes comme colonne dans df2
+df2 <- df2 %>%
+  mutate(player_id = rownames(.))
+
+# Ajout de noms des lignes comme colonne dans final_groupe_df
+final_groupe_df <- final_groupe_df %>%
+  mutate(player_id = rownames(.))
+
+# Fait la jointure pour ajouter la colonne tournament_name_most_frequent
+df2 <- df2 %>%
+  left_join(dplyr::select(final_groupe_df, player_id, tournament_name_most_frequent), by = "player_id")
+
+df2 <- as.data.frame(df2)
+
+row.names(df2) <- df2[[53]]  
+df2 <- df2[-53]
+
+final_groupe_df<- final_groupe_df[-56]
+
+
+```
+
+```{r}
+final_groupe_df
+attach(df2)
+```
+
+
+converti tournament_name_most_frequent en factor
+```{r}
+df2$tournament_name_most_frequent <- as.factor(df2$tournament_name_most_frequent)
+df2
+```
+
+Étant donné que nous avons 5 championnats, nous allons en enlever 2 pour n'avoir que 3 valeurs dans un premier temps. (Vous pouvez ne pas exécuter ce bloc si vous souhaitez garder les 5 valeurs pour les championnats).
+
+```{r}
+library(dplyr)
+
+# Supposons que test_df ait une colonne 'group' indiquant les groupes
+# Filtre les lignes pour exclure les groupes 1 et 2
+df2 <- df2 %>%
+  filter(tournament_name_most_frequent != "Serie A"  & tournament_name_most_frequent != "LaLiga" & tournament_name_most_frequent != "Bundesliga" )
+
+# Vérifie le résultat
+df2
+
+```
+```{r}
+attach(df2)
+table(tournament_name_most_frequent)
+```
+la on voit qu'il y'a une repartition equitable dans les 5 championnat.
+
+
+
+Création d’un échantillon train et d’un échantillon test
+
+```{r}
+set.seed(1)
+n <- nrow(df2)
+p <- ncol(df2)-1
+test.ratio <- .2 # ratio of test/train samples
+n.test <- round(n*test.ratio)
+n.test
+```
+
+```{r}
+tr <- sample(1:n,n.test)
+data.test <- df2[tr,]
+data.train <- df2[-tr,]
+```
+On va entrainer le modele avec data.train et le tester avec data.test
+
+```{r}
+library(rpart)
+library(rpart.plot)
+set.seed(1)
+arbre=rpart(tournament_name_most_frequent~.,data.train,control=rpart.control(minsplit=5,cp=0))
+printcp(arbre)
+```
+la plus petite erreur
+```{r}
+cp.opt <- arbre$cptable[which.min(arbre$cptable[, "xerror"]), "CP"]
+cp.opt
+```
+L'arbre optimal
+```{r}
+arbre.opt <- prune(arbre,cp.opt)
+rpart.plot(arbre.opt, type=4)
+```
+## Predication
+```{r}
+class_cart= predict(arbre.opt, newdata=data.test, type="class")
+```
+
+
+## Table Confusion
+```{r}
+table(class_cart, data.test$tournament_name_most_frequent)
+```
+## Accuracy
+```{r}
+accuracy_cart = mean(class_cart == data.test$tournament_name_most_frequent)
+accuracy_cart
+```
+On peut voir que l'accuracy pour les 5 classes est d'un peu plus de 1/5 et lorsqu'on a 3 classes, l'accuracy est d'environ 1/3. En gros, il n'y a pas de grande différence entre classer les joueurs dans ces championnats de façon aleatoire et utiliser ce modèle. Il est donc un peu compliqué de prédire le championnat de chaque joueur avec ces données, car tous les championnats se ressemblent plus ou moins. Essayons quand même de voir certaines caractéristiques dans chaque championnat.
+
+```{r}
+library(MASS)
+lda(tournament_name_most_frequent ~., data=df2)
+```
+Ce qu'on peut dire:
+La premier Ligue est le championnat avec le plus grand nombre de but inscrit et aussi le plus de passes decisive. On peut donc dire qu'en attaque ils detiennent les meilleurs joueur. Tant dis que dans ces catagories, la ligue 1 est le championnat le plus bas.
+
+Les joueurs de la Premier League ont les meilleures performances en dribbles réussis, suivis de près par LaLiga.
+La Premier League a également le plus grand nombre d'interceptions, ce qui indique une forte capacité défensive.
+
+La Premier League et la Ligue 1 ont les ratings moyens les plus élevés, indiquant des performances globalement meilleures.
+
+La Premier League et LaLiga ont les meilleures performances en termes de duels gagnés, tirs bloqués et interceptions.
+
+Donc, La premier league domine dans tout les domaines quasiment et peut etre percu comme le championnat le plus competitif et performant.
+La serie A et la Bundesliga sont les moins performent.
+
+
+Nous n'avons pas reussi a predire ce que nous voulions predire a la base.
+Essayons de voir si la prediction sur les group creer en clustering est possible, sachant que ces groupe represente le profile de chaque joueur.
+
+
+
+Nous nommerons ce df test_df
+```{r}
+test_df <- final_groupe_quantitative
+test_df
+```
+De même, ce bloc est à exécuter si vous souhaitez garder uniquement deux valeurs pour le groupe. Je ne vais pas l'exécuter. 
+
+```{r}
+library(dplyr)
+
+
+# Supposons que test_df ait une colonne 'group' indiquant les groupes
+# Filtre les lignes pour conserver uniquement les groupes 3, 4 et 5
+test_df <- test_df %>%
+  filter(group %in% c(3, 4, 5))
+
+
+# Vérifie le résultat
+test_df
+
+```
+```{r}
+attach(df2)
+table(tournament_name_most_frequent)
+```
+Création d’un échantillon train et d’un échantillon test
+
+```{r}
+set.seed(1)
+n <- nrow(test_df)
+p <- ncol(test_df)-1
+test.ratio <- .2 # ratio of test/train samples
+n.test <- round(n*test.ratio)
+n.test
+```
+
+```{r}
+tr <- sample(1:n,n.test)
+data.test <- test_df[tr,]
+data.train <- test_df[-tr,]
+```
+
+```{r}
+library(rpart)
+library(rpart.plot)
+set.seed(1)
+arbre=rpart(group~.,data.train,control=rpart.control(minsplit=5,cp=0))
+printcp(arbre)
+```
+
+```{r}
+cp.opt <- arbre$cptable[which.min(arbre$cptable[, "xerror"]), "CP"]
+cp.opt
+```
+```{r}
+arbre.opt <- prune(arbre,cp.opt)
+rpart.plot(arbre.opt, type=4)
+```
+
+## Prediction
+```{r}
+class_cart= predict(arbre.opt, newdata=data.test, type="class")
+```
+
+## Table Confusion
+```{r}
+table(class_cart, data.test$group)
+```
+##Accuracy
+```{r}
+accuracy_cart = mean(class_cart == data.test$group)
+accuracy_cart
+```
+Il arrive plutôt bien à prédire les groupes de chaque joueur.
+
+#```{r}
+#install.packages("pROC")
+#```
+
+
+```{r}
+library(pROC)
+pred_cart = predict(arbre.opt, data.test, type="prob")[,2]
+ROC_cart <- roc(data.test$group, pred_cart)
+ROC_cart$auc
+```
+L'air sous la courbe est très proche de 1. Donc le modèle distingue très bien les 5 groupes.
+
+Cependant, nous allons essayer de prédire quelque chose de beaucoup plus intéressant. Nous allons prédire si le joueur, au cours des années considérées pour notre étude, était une légende, un bon joueur, un joueur moyen ou un remplaçant.
+
+Pour cela, nous allons définir nous-mêmes ce qu'est une légende, un bon joueur, etc.
+
+On considérera qu'une légende est un joueur avec une note de plus de 7.4 sur 10 et qui n'appartient pas au groupe 1. Il est très important qu'ils n'appartiennent pas au groupe 1, car ce groupe représente les remplaçants, c'est-à-dire ceux qui n'ont presque pas joué de match au cours de ces années soit parce qu'ils étaient nuls, soit parce qu'ils étaient des vétérans. Certains dans ce groupe ont donc par exemple joué 2 ou 3 bons matchs et n'ont plus jamais rejoué. Ils ne peuvent pas être considérés comme des légendes.
+
+Voici le dataframe avec la nouvelle colonne que nous devrons prédire :
+```{r}
+library(dplyr)
+
+# Ajout d'une nouvelle colonne 'categorie_joueur' basée sur les critères définis
+df3 <- final_groupe_df %>%
+  mutate(categorie_joueur = case_when(
+    rating >= 7.4 & group %in% c(2, 3, 4, 5) ~ "Légende",
+    rating >= 7 & rating < 7.4 & group %in% c(2, 3, 4, 5) ~ "Bon joueur",
+    rating < 7 & group %in% c(2, 3, 4, 5) ~ "Joueur moyen",
+    group == 1 ~ "remplaceant",
+   
+  ))
+
+# Vérification de la distribution des catégories
+table(df3$categorie_joueur)
+
+# Affiche les premières lignes pour vérifier le résultat
+df3 %>% dplyr::select(player_name, rating, group, categorie_joueur)
+
+```
+```{r}
+# Filtrage pour afficher uniquement les joueurs de la catégorie "Légende"
+legends <- df3 %>%
+  filter(categorie_joueur == "legende")
+
+# Affiche les résultats
+print(legends)
+
+```
+Plutot coherent. Dans legende on a les joueurs qui ont dominé l'air 2013 a 2021
+
+```{r}
+df3
+```
+
+On supprime les colonnes rating et groupe pour notre prédiction car la nouvelle colonne a été construite à l'aide de ces deux colonnes.
+```{r}
+# Supprime les colonnes team_name_most_frequent et tournament_name_most_frequent
+df3 <- df3 %>%
+  dplyr::select(-team_name_most_frequent, -tournament_name_most_frequent, -player_name,-rating,-group)
+```
+```{r}
+#df3$group <- as.factor(df3$group)
+df3$categorie_joueur <- as.factor(df3$categorie_joueur)
+
+```
+
+
+
+
+```{r}
+attach(df3)
+table(categorie_joueur)
+```
+Création d’un échantillon train et d’un échantillon test
+
+```{r}
+set.seed(1)
+n <- nrow(df3)
+p <- ncol(df3)-1
+test.ratio <- .2 # ratio of test/train samples
+n.test <- round(n*test.ratio)
+n.test
+```
+
+```{r}
+tr <- sample(1:n,n.test)
+data.test <- df3[tr,]
+data.train <- df3[-tr,]
+```
+
+```{r}
+library(rpart)
+library(rpart.plot)
+set.seed(1)
+arbre=rpart(categorie_joueur~.,data.train,control=rpart.control(minsplit=5,cp=0))
+printcp(arbre)
+```
+
+
+```{r}
+cp.opt <- arbre$cptable[which.min(arbre$cptable[, "xerror"]), "CP"]
+cp.opt
+```
+```{r}
+arbre.opt <- prune(arbre,cp.opt)
+rpart.plot(arbre.opt, type=4)
+print(arbre.opt)
+```
+## Prediction
+
+```{r}
+class_cart= predict(arbre.opt, newdata=data.test, type="class")
+```
+
+## Table Confusion
+
+```{r}
+table(class_cart, data.test$categorie_joueur)
+```
+## Accuracy
+```{r}
+accuracy_cart = mean(class_cart == data.test$categorie_joueur)
+accuracy_cart
+```
+Très bonne accuracy. Nous validons donc notre modèle. Nous pouvons maintenant prédire si un joueur était une légende, un bon joueur, un joueur moyen ou un remplaçant lors des années 2013 à 2021.
+
+```{r}
+pred_cart = predict(arbre.opt, data.test, type="prob")[,2]
+ROC_cart <- roc(data.test$categorie_joueur, pred_cart)
+ROC_cart$auc
+```
+
+On voit que le modèle arrive à distinguer les 4 classes, même s'il ne le fait pas de manière parfaite, cela reste correct.
+
+
+Nous pouvons également utiliser notre modèle pour déterminer si un joueur est considéré comme un bon joueur ou non. Pour ce faire, il suffit d'adapter les données de notre modèle et de les convertir en performances annuelles.
+
+
+Essayons un autre modele
+
+```{r}
+library(randomForest)
+
+fit_RF <- randomForest(categorie_joueur~.,data.train)
+```
+
+## Prediction
+```{r}
+class_RF= predict(fit_RF, newdata=data.test, type="class")
+```
+
+## Table de confusion
+```{r}
+table(class_RF, data.test$categorie_joueur)
+```
+
+## Accuracy
+```{r}
+accuracy_RF = mean(class_RF == data.test$categorie_joueur)
+accuracy_RF
+```
+
+```{r}
+pred_RF = predict(fit_RF, data.test, type="prob")[,2]
+ROC_RF <- roc(data.test$categorie_joueur, pred_RF)
+ROC_RF$auc
+```
+Ce modèle est meilleur que le précédent.
+
+
